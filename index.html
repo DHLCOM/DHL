@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DHL Tracking Pro</title>
+
+<style>
+body{
+  font-family:Arial;
+  background:linear-gradient(135deg,#ff6b6b,#ffa502,#ffd32a);
+  padding:20px;
+}
+
+.container{
+  max-width:900px;
+  margin:auto;
+  background:#fff;
+  padding:20px;
+  border-radius:15px;
+}
+
+/* BAR */
+.bar{
+  height:12px;
+  background:#ddd;
+  border-radius:20px;
+  position:relative;
+  margin:20px 0;
+}
+
+.progress{
+  height:100%;
+  width:0%;
+  background:green;
+  transition:1s;
+}
+
+/* 🚚 TRUCK فوق الخط */
+.truck{
+  position:absolute;
+  top:50%;
+  left:0%;
+  transform:translate(-50%,-50%);
+  font-size:40px;
+  transition:1s;
+}
+
+/* RECIVUTA */
+.rec-box{
+  margin-top:20px;
+  padding:20px;
+  border-radius:15px;
+  background:#f9f9f9;
+  box-shadow:0 10px 20px rgba(0,0,0,0.15);
+}
+
+.rec-title{
+  text-align:center;
+  color:#ff6600;
+  font-weight:bold;
+  margin-bottom:10px;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+td{
+  padding:8px;
+  border-bottom:1px solid #ddd;
+}
+
+/* PANEL */
+.panel{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.85);
+  justify-content:center;
+  align-items:center;
+}
+
+.box{
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  width:90%;
+  max-width:400px;
+}
+
+input{
+  width:100%;
+  padding:8px;
+  margin:5px 0;
+}
+
+button{
+  padding:10px;
+  margin:5px;
+  background:#ffcc00;
+  border:none;
+  cursor:pointer;
+  border-radius:8px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>🚚 DHL TRACKING SYSTEM</h2>
+
+<button onclick="start()">Start</button>
+<button onclick="reset()">Reset</button>
+<button onclick="openPanel()">DHL</button>
+
+<div class="bar">
+  <div class="progress" id="progress"></div>
+  <div class="truck" id="truck">🚚</div>
+</div>
+
+<h3 id="status">Ready</h3>
+
+<div id="recivuta"></div>
+
+</div>
+
+<!-- PANEL -->
+<div class="panel" id="panel">
+  <div class="box">
+
+    <h3>DHL CONTROL</h3>
+
+    <input id="nome" placeholder="Nome">
+    <input id="cognome" placeholder="Cognome">
+    <input id="indirizzo" placeholder="Indirizzo">
+    <input id="gmail" placeholder="Gmail">
+    <input id="telefono" placeholder="Telefono">
+    <input id="importo" placeholder="Importo">
+
+    <button onclick="save()">Save</button>
+    <button onclick="closePanel()">Close</button>
+
+  </div>
+</div>
+
+<script>
+
+let day = 0;
+let run = false;
+let clicks = 0;
+const PASS = "200911";
+let data = {};
+
+/* START */
+function start(){
+
+  if(run) return;
+  run = true;
+
+  let interval = setInterval(()=>{
+
+    day++;
+
+    update();
+
+    if(day >= 6){
+      clearInterval(interval);
+      run = false;
+    }
+
+  }, 1500);
+}
+
+/* UPDATE */
+function update(){
+
+  let percent = (day/6)*100;
+
+  document.getElementById("progress").style.width = percent + "%";
+  document.getElementById("truck").style.left = percent + "%";
+
+  /* ❌ STOP DAY 5 */
+  if(day === 5){
+    document.getElementById("status").innerHTML =
+      "❌ IL TUO ORDINE È STATO DISATTIVATO";
+    run = false;
+    return;
+  }
+
+  /* DONE */
+  if(day >= 6){
+    document.getElementById("status").innerHTML =
+      "✅ CONSEGNATO";
+  }else{
+    document.getElementById("status").innerHTML =
+      "Day " + day + " / 6";
+  }
+}
+
+/* RESET */
+function reset(){
+  day = 0;
+  run = false;
+  update();
+}
+
+/* SECRET PANEL */
+function openPanel(){
+
+  clicks++;
+
+  setTimeout(()=>{ clicks = 0; }, 3000);
+
+  if(clicks >= 10){
+
+    clicks = 0;
+
+    let p = prompt("DHL Code:");
+
+    if(p === PASS){
+      document.getElementById("panel").style.display="flex";
+    }
+  }
+}
+
+function closePanel(){
+  document.getElementById("panel").style.display="none";
+}
+
+/* RECIVUTA */
+function save(){
+
+  data = {
+    code: "JD" + Math.floor(Math.random()*999999999999),
+    nome: nome.value,
+    cognome: cognome.value,
+    indirizzo: indirizzo.value,
+    gmail: gmail.value,
+    telefono: telefono.value,
+    importo: importo.value,
+    date: new Date().toLocaleString()
+  };
+
+  document.getElementById("recivuta").innerHTML = `
+  
+  <div class="rec-box">
+
+    <div class="rec-title">📦 DHL EXPRESS RECIVUTA</div>
+
+    <table>
+      <tr><td>Code</td><td>${data.code}</td></tr>
+      <tr><td>Nome</td><td>${data.nome}</td></tr>
+      <tr><td>Cognome</td><td>${data.cognome}</td></tr>
+      <tr><td>Indirizzo</td><td>${data.indirizzo}</td></tr>
+      <tr><td>Email</td><td>${data.gmail}</td></tr>
+      <tr><td>Telefono</td><td>${data.telefono}</td></tr>
+      <tr><td>Importo</td><td>${data.importo} €</td></tr>
+      <tr><td>Route</td><td>Egitto ➜ Italia</td></tr>
+      <tr><td>Data</td><td>${data.date}</td></tr>
+    </table>
+
+  </div>
+
+  `;
+
+  closePanel();
+}
+
+</script>
+
+</body>
+</html>
