@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DHL Tracking System</title>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  font-family:Arial,sans-serif;
+  background:linear-gradient(135deg,#ff6b6b,#feca57,#ff9ff3);
+  min-height:100vh;
+  padding:20px;
+}
+
+.container{
+  max-width:650px;
+  margin:auto;
+  background:#fff;
+  padding:25px;
+  border-radius:15px;
+  text-align:center;
+  box-shadow:0 10px 25px rgba(0,0,0,0.15);
+}
+
+.search-box{
+  position:relative;
+  margin-top:20px;
+}
+
+#searchInput{
+  width:100%;
+  padding:15px;
+  font-size:16px;
+  border:2px solid #ffcc00;
+  border-radius:10px;
+}
+
+.search-btn{
+  position:absolute;
+  right:5px;
+  top:5px;
+  height:85%;
+  width:55px;
+  border:none;
+  background:#ffcc00;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.result{
+  display:none;
+  margin-top:20px;
+  text-align:left;
+  padding:20px;
+  border-radius:15px;
+  box-shadow:0 10px 20px rgba(0,0,0,0.1);
+  background:#fafafa;
+}
+
+.track-line{
+  position:relative;
+  height:12px;
+  background:#ddd;
+  border-radius:20px;
+  margin:20px 0;
+  overflow:visible;
+}
+
+.progress{
+  height:100%;
+  background:#28a745;
+  width:0%;
+  border-radius:20px;
+}
+
+.truck{
+  position:absolute;
+  top:-30px;
+  left:0%;
+  font-size:45px;
+  transform:translateX(-50%) scaleX(-1);
+  transition:left 1s linear;
+  z-index:10;
+}
+
+.dhl-btn{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  width:70px;
+  height:70px;
+  border-radius:50%;
+  background:#ffcc00;
+  border:none;
+  font-size:24px;
+  cursor:pointer;
+  font-weight:bold;
+  box-shadow:0 8px 20px rgba(0,0,0,0.2);
+}
+
+.admin{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.85);
+  justify-content:center;
+  align-items:center;
+  z-index:999;
+}
+
+.admin-box{
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  width:90%;
+  max-width:400px;
+}
+
+.admin-box h3{
+  margin-bottom:15px;
+}
+
+input{
+  width:100%;
+  padding:10px;
+  margin:6px 0;
+  border:1px solid #ccc;
+  border-radius:8px;
+}
+
+button{
+  padding:12px;
+  border:none;
+  border-radius:8px;
+}
+
+.admin-btn{
+  width:100%;
+  margin-top:10px;
+  background:#ffcc00;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.close-btn{
+  width:100%;
+  margin-top:10px;
+  background:#333;
+  color:#fff;
+  cursor:pointer;
+}
+
+.receipt{
+  margin-top:20px;
+  padding:15px;
+  border:2px dashed #333;
+  border-radius:10px;
+  background:#fff;
+}
+
+.not-found{
+  color:red;
+  font-weight:bold;
+  text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>DHL Tracking System</h2>
+
+<div class="search-box">
+<input id="searchInput" placeholder="JDXXXXXXXX">
+<button class="search-btn" onclick="searchTracking()">Go</button>
+</div>
+
+<div id="result" class="result"></div>
+
+</div>
+
+<button class="dhl-btn" onclick="dhlClick()">DHL</button>
+
+<div class="admin" id="admin">
+<div class="admin-box">
+
+<h3>Admin Panel</h3>
+
+<input id="fullname" placeholder="Full Name">
+<input id="phone" placeholder="Phone">
+<input id="address" placeholder="Address">
+<input id="gmail" placeholder="Gmail">
+<input id="price" placeholder="Price €">
+
+<button class="admin-btn" onclick="addShipment()">Add Shipment</button>
+<button class="close-btn" onclick="closeAdmin()">Close</button>
+
+</div>
+</div>
+
+<script>
+
+let shipments = JSON.parse(localStorage.getItem("dhlShipments")) || [];
+
+let clicks = 0;
+const PASSWORD = "200911";
+
+function saveShipments(){
+  localStorage.setItem("dhlShipments", JSON.stringify(shipments));
+}
+
+function dhlClick(){
+  clicks++;
+
+  if(clicks < 10){
+    return;
+  }
+
+  clicks = 0;
+
+  const p = prompt("Enter Password:");
+
+  if((p || "").trim() === PASSWORD){
+    document.getElementById("admin").style.display = "flex";
+  }else{
+    alert("Wrong password");
+  }
+}
+
+function closeAdmin(){
+  document.getElementById("admin").style.display = "none";
+}
+
+function addShipment(){
+
+  if(!fullname.value || !phone.value || !address.value || !gmail.value || !price.value){
+    alert("Fill all fields");
+    return;
+  }
+
+  const code = generateTrackingCode();
+
+  const shipment = {
+    code,
+    fullname: fullname.value,
+    phone: phone.value,
+    address: address.value,
+    gmail: gmail.value,
+    price: price.value,
+    createdAt: Date.now()
+  };
+
+  shipments.unshift(shipment);
+
+  saveShipments();
+
+  alert("Shipment Added:\n" + code);
+
+  fullname.value = "";
+  phone.value = "";
+  address.value = "";
+  gmail.value = "";
+  price.value = "";
+}
+
+function receipt(s){
+  return `
+  <div class="receipt">
+    <h3>RECEIPT</h3>
+
+    <p><b>Tracking Code:</b> ${s.code}</p>
+    <p><b>Route:</b> Sharm El Sheikh ➜ Italy</p>
+    <p><b>Status:</b> In Transit 🚚</p>
+
+    <hr><br>
+
+    <p><b>Name:</b> ${s.fullname}</p>
+    <p><b>Phone:</b> ${s.phone}</p>
+    <p><b>Address:</b> ${s.address}</p>
+    <p><b>Email:</b> ${s.gmail}</p>
+
+    <hr><br>
+
+    <p><b>Price:</b> ${s.price} €</p>
+  </div>
+  `;
+}
+
+function searchTracking(){
+
+  const code = document
+    .getElementById("searchInput")
+    .value
+    .toUpperCase()
+    .trim();
+
+  const result = document.getElementById("result");
+
+  const s = shipments.find(x => x.code === code);
+
+  result.style.display = "block";
+
+  if(!s){
+    result.innerHTML = `
+      <div class="not-found">
+        Shipment Not Found
+      </div>
+    `;
+    return;
+  }
+
+  let days = Math.floor((Date.now() - s.createdAt) / 86400000);
+
+  if(days > 6){
+    days = 6;
+  }
+
+  const progress = (days / 6) * 100;
+
+  result.innerHTML = `
+
+    <h2>DHL Tracking System</h2>
+
+    <p><b>Status:</b> In Transit</p>
+    <p><b>Tracking Code:</b> ${s.code}</p>
+
+    <p><b>Delivery Progress:</b> Day ${days}/6</p>
+
+    <div class="track-line">
+      <div class="progress" style="width:${progress}%"></div>
+      <div class="truck" id="truck">🚚</div>
+    </div>
+
+    <p><b>${Math.floor(progress)}%</b></p>
+
+    ${receipt(s)}
+  `;
+
+  setTimeout(()=>{
+    const truck = document.getElementById("truck");
+
+    if(truck){
+      truck.style.left = progress + "%";
+    }
+  },50);
+}
+
+function generateTrackingCode(){
+  const part1 = Math.floor(1000 + Math.random() * 9000);
+  const part2 = Math.floor(1000 + Math.random() * 9000);
+  const part3 = Math.floor(1000 + Math.random() * 9000);
+  const part4 = Math.floor(1000 + Math.random() * 9000);
+
+  return `JD01 ${part1} ${part2} ${part3} ${part4}`;
+}
+
+window.addEventListener("keydown", function(e){
+  if(e.key === "Enter"){
+    searchTracking();
+  }
+});
+
+</script>
+
+</body>
+</html>
